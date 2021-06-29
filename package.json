@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "TODO",
   "main": "index.js",
+  "types": "index.d.ts",
   "files": [
     "README.md",
     "android",
@@ -16,15 +17,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/github_account/react-native-sdk-bridge.git",
-    "baseUrl": "https://github.com/github_account/react-native-sdk-bridge"
+    "url": "git+https://github.com/mises-id/react-native-sdk-bridge.git",
+    "baseUrl": "https://github.com/mises-id/react-native-sdk-bridge"
   },
   "keywords": [
     "react-native"
   ],
   "author": {
-    "name": "Your Name",
-    "email": "yourname@email.com"
+    "name": "baogechen",
+    "email": "baoge_pmb@hotmail.com"
   },
   "license": "MIT",
   "licenseFilename": "LICENSE",
