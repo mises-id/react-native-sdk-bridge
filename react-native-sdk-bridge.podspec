@@ -18,7 +18,7 @@ Pod::Spec.new do |s|
   # s.license    = { :type => "MIT", :file => "LICENSE" }
   s.authors      = { "Your Name" => "baoge_pmb@hotmail.com" }
   s.platforms    = { :ios => "9.0" }
-  s.source       = { :git => "https://github.commises-id/react-native-sdk-bridge.git", :tag => "#{s.version}" }
+  s.source       = { :git => "https://github.com/mises-id/react-native-sdk-bridge.git", :tag => "#{s.version}" }
 
   s.source_files = "ios/**/*.{h,c,cc,cpp,m,mm,swift}"
   s.requires_arc = true
