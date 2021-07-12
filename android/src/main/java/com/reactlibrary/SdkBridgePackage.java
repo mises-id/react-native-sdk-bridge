@@ -23,10 +23,4 @@ public class SdkBridgePackage implements ReactPackage {
         return Collections.emptyList();
     }
 
-    @Override
-    public List<Class<? extends JavaScriptModule>> createJSModules() {
-        return Arrays.<Class<? extends JavaScriptModule>>asList(
-                ActionsModule.class
-        );
-    }
 }
