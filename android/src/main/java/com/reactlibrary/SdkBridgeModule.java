@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import sdk.*;
+import mobile.*;
 
 public class SdkBridgeModule extends ReactContextBaseJavaModule {
 
@@ -36,7 +36,7 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void newSdk(Promise promise) {
         tryReact(promise, () ->
-                this.getPointer(Sdk.newMSdk(new MSdkOption()))
+                this.getPointer(Mobile.newMSdk())
         );
     }
 
@@ -44,7 +44,8 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
     public void sdkTestConnection(String ptr, Promise promise) {
         tryReact(promise, () -> {
             MSdk msdk = this.getUnretainedObject(ptr);
-            return msdk.testConnection();
+            msdk.testConnection();
+            return null;
         });
     }
 
@@ -52,7 +53,16 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
     public void sdkSetLogLevel(String ptr, long level, Promise promise) {
         tryReact(promise, () -> {
             MSdk msdk = this.getUnretainedObject(ptr);
-            return msdk.setLogLevel(level);
+            msdk.setLogLevel(level);
+            return null;
+        });
+    }
+
+    @ReactMethod
+    public void sdkUserMgr(String ptr, Promise promise) {
+        tryReact(promise, () -> {
+            MSdk msdk = this.getUnretainedObject(ptr);
+            return msdk.userMgr();
         });
     }
 
