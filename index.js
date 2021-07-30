@@ -5,14 +5,14 @@ import { NativeModules } from 'react-native';
 const { SdkBridge } = NativeModules;
 
 
-export class MisesSdk {
+export class MSdk {
   constructor(ptr) {
     this._ptr = ptr;
   }
 
-  static async newsdk() {
+  static async newSdk() {
     const ptr = await SdkBridge.newSdk();
-    return new MisesSdk(ptr);
+    return new MSdk(ptr);
   }
 
   testConnection() {
@@ -23,6 +23,12 @@ export class MisesSdk {
     return SdkBridge.sdkSetLogLevel(this._ptr, level);
   }
 
+  userMgr() {
+    return SdkBridge.sdkUserMgr(this._ptr);
+  }
+  randomMnemonics() {
+    return SdkBridge.sdkRandomMnemonics(this._ptr);
+  }
 }
 
 export default SdkBridge;
