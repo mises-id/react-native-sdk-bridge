@@ -5,6 +5,143 @@ import { NativeModules } from 'react-native';
 const { SdkBridge } = NativeModules;
 
 
+let ins;
+
+export class MUserInfo {
+  constructor(ptr) {
+    this._ptr = ptr;
+  }
+  async name() {
+    return SdkBridge.userInfoName(this._ptr);
+  }
+
+	async gender() {
+    return SdkBridge.userInfoGender(this._ptr);
+  }
+	async avatarDid() {
+    return SdkBridge.userInfoAvatarDid(this._ptr);
+  }    
+	async homePage() {
+    return SdkBridge.userInfoHomePage(this._ptr);
+  }
+	async emails() {
+    const ptr = await SdkBridge.userInfoEmails(this._ptr);
+    if (ptr == null) {
+      return null;
+    }
+    return new MStringList(ptr)
+  }
+	async telphones() {
+    const ptr = await  SdkBridge.userInfoTelphones(this._ptr);
+    if (ptr == null) {
+      return null;
+    }
+    return new MStringList(ptr)
+  }
+	async intro() {
+    return SdkBridge.userInfoIntro(this._ptr);
+  }
+}
+
+export class MUser {
+  constructor(ptr) {
+    this._ptr = ptr;
+  }
+  async misesID() {
+    return SdkBridge.userMisesID(this._ptr);
+  }
+
+	async info(){
+    const ptr = await  SdkBridge.userInfo(this._ptr);
+    if (ptr == null) {
+      return null;
+    }
+    return new MUserInfo(ptr)
+  }
+	async getFollowing(appDid){
+    const ptr = await  SdkBridge.userGetFollowing(this._ptr, appDid);
+    if (ptr == null) {
+      return null;
+    }
+    return new MStringList(ptr)
+  }
+	async follow(followingId, appDid){
+    return SdkBridge.userSetFollow(this._ptr, followingId, true, appDid);
+  }
+  async unfollow(unfollowingId, appDid){
+    return SdkBridge.userSetFollow(this._ptr, unfollowingId, false, appDid);
+  }
+	async isRegistered(){
+    return SdkBridge.userIsRegistered(this._ptr);
+  }
+	async register(appDid){
+    return SdkBridge.userRegister(this._ptr, appDid);
+  }
+
+}
+
+
+export class MStringList {
+  constructor(ptr) {
+    this._ptr = ptr;
+  }
+  async count() {
+    return SdkBridge.stringListCount(this._ptr);
+  }
+
+  async get(idx) {
+    return SdkBridge.stringListGet(this._ptr,idx);
+  }
+
+}
+
+export class MUserList {
+  constructor(ptr) {
+    this._ptr = ptr;
+  }
+  async count() {
+    return SdkBridge.userListCount(this._ptr);
+  }
+
+  async get(idx) {
+    return SdkBridge.userListGet(this._ptr,idx);
+  }
+
+}
+
+export class MUserMgr {
+  constructor(ptr) {
+    this._ptr = ptr;
+  }
+  async activeUser() {
+    const ptr = await SdkBridge.userMgrActiveUser(this._ptr);
+    if (ptr == null) {
+      return null;
+    }
+    return new MUser(ptr);
+  }
+
+  async createUser(mnemonic, passPhrase) {
+    const ptr = await SdkBridge.userMgrCreateUser(this._ptr,mnemonic, passPhrase);
+    if (ptr == null) {
+      return null;
+    }
+    return new MUser(ptr);
+  }
+
+  async listUsers() {
+    const ptr = await SdkBridge.userMgrListUser(this._ptr);
+    if (ptr == null) {
+      return null;
+    }
+    return new MUserList(ptr);
+  }
+
+  async setActiveUser(did, passPhrase) {
+    return SdkBridge.userMgrSetActiveUser(this._ptr, did, passPhrase);
+  }
+}
+
 export class MSdk {
   constructor(ptr) {
     this._ptr = ptr;
@@ -15,18 +152,30 @@ export class MSdk {
     return new MSdk(ptr);
   }
 
-  testConnection() {
+  static async instance() {
+      if (ins) {
+      return ins;
+    }
+    ins = await MSdk.newSdk();
+    return ins;
+  }
+
+  async testConnection() {
     return SdkBridge.sdkTestConnection(this._ptr);
   }
 
-  setLogLevel(level) {
+  async setLogLevel(level) {
     return SdkBridge.sdkSetLogLevel(this._ptr, level);
   }
 
-  userMgr() {
-    return SdkBridge.sdkUserMgr(this._ptr);
+  async userMgr() {
+    const ptr = await SdkBridge.sdkUserMgr(this._ptr);
+    if (ptr == null) {
+      return null;
+    }
+    return new MUserMgr(ptr);
   }
-  randomMnemonics() {
+  async randomMnemonics() {
     return SdkBridge.sdkRandomMnemonics(this._ptr);
   }
 }
