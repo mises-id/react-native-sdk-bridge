@@ -11,6 +11,18 @@ export class MUserInfo {
   constructor(ptr) {
     this._ptr = ptr;
   }
+  static async newUserInfo(
+    name,gender,avatarDid,
+    avatarThumb,homePage,
+    emails,telphones,intro)
+  {
+    const ptr = await SdkBridge.newUserInfo(
+      name,gender,avatarDid,
+      avatarThumb,homePage,
+      emails,telphones,intro
+    );
+    return new MUserInfo(ptr);
+  }
   async name() {
     return SdkBridge.userInfoName(this._ptr);
   }
@@ -51,6 +63,10 @@ export class MUser {
     return SdkBridge.userMisesID(this._ptr);
   }
 
+  async setInfo(info){
+    return SdkBridge.userSetInfo(this._ptr, info);
+  }
+
 	async info(){
     const ptr = await  SdkBridge.userInfo(this._ptr);
     if (ptr == null) {
@@ -84,6 +100,10 @@ export class MUser {
 export class MStringList {
   constructor(ptr) {
     this._ptr = ptr;
+  }
+  static async newStringList(source, seperator) {
+    const ptr = await SdkBridge.newStringList(source, seperator);
+    return new MStringList(ptr);
   }
   async count() {
     return SdkBridge.stringListCount(this._ptr);
@@ -158,6 +178,10 @@ export class MSdk {
     }
     ins = await MSdk.newSdk();
     return ins;
+  }
+
+  async setTestEndpoint(endpoint) {
+    return SdkBridge.sdkSetTestEndpoint(this._ptr,endpoint);
   }
 
   async testConnection() {
