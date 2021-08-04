@@ -11,6 +11,8 @@ import com.facebook.react.bridge.Callback;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 import mobile.*;
@@ -20,6 +22,11 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
     private final ReactApplicationContext reactContext;
     private final Map<String, Object> pointers;
     private final AtomicLong pointer;
+    static final int DEFAULT_THREAD_POOL_SIZE = 4;
+
+    ExecutorService executorService = Executors.newFixedThreadPool(DEFAULT_THREAD_POOL_SIZE);
+    private final Map<String, Promise> pendingSessions;
+    private Object pendingSessionsMutex = new Object();
 
     public SdkBridgeModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -27,6 +34,7 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
 
         this.pointers = new HashMap<>();
         this.pointer = new AtomicLong();
+        this.pendingSessions = new HashMap<>();
     }
 
     @Override
@@ -40,16 +48,26 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
             MSdk sdk = Mobile.newMSdk();
             File dir = reactContext.getFilesDir();
             sdk.setHomePath(dir.getAbsolutePath());
-            return this.getPointer(sdk);
+            final String ptr = this.getPointer(sdk);
+            startPendingSessionResolver(ptr);
+            return ptr;
         });
     }
 
     @ReactMethod()
     public void sdkTestConnection(String ptr, Promise promise) {
+        tryReactWithExecutor(promise, () -> {
+            MSdk msdk = SdkBridgeModule.this.getUnretainedObject(ptr);
+            msdk.testConnection();
+            return null;
+        });
+    }
 
+    @ReactMethod
+    public void sdkSetTestEndpoint(String ptr, String endpoint, Promise promise) {
         tryReact(promise, () -> {
             MSdk msdk = this.getUnretainedObject(ptr);
-            msdk.testConnection();
+            msdk.setTestEndpoint(endpoint);
             return null;
         });
     }
@@ -132,6 +150,14 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void newStringList(String source, String seperator, Promise promise) {
+        tryReact(promise, () -> {
+            MStringList list = Mobile.newMStringList(source, seperator);
+            return this.getPointer(list);
+        });
+    }
+
+    @ReactMethod
     public void stringListCount(String ptr,Promise promise) {
         tryReact(promise, () -> {
             MStringList stringList = this.getUnretainedObject(ptr);
@@ -153,6 +179,24 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
             return muser.misesID();
         });
     }
+
+    @ReactMethod
+    public void newUserInfo(String var0, String var1, String var2, byte[] var3, String var4, MStringList var5, MStringList var6, String var7, Promise promise) {
+        tryReact(promise, () -> {
+            MUserInfo info = Mobile.newMUserInfo(var0, var1,var2,var3,var4,var5,var6,var7);
+            return this.getPointer(info);
+        });
+    }
+
+    @ReactMethod
+    public void userSetInfo(String ptr, MUserInfo info, Promise promise) {
+        tryReactWithPendingSession(promise, () -> {
+            MUser muser = this.getUnretainedObject(ptr);
+
+            return muser.setInfo(info);
+        });
+    }
+
     @ReactMethod
     public void userInfo(String ptr, Promise promise) {
         tryReact(promise, () -> {
@@ -163,35 +207,42 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
     }
     @ReactMethod
     public void userGetFollowing(String ptr, String appDid, Promise promise) {
-        tryReact(promise, () -> {
-            MUser muser = this.getUnretainedObject(ptr);
+        tryReactWithExecutor(promise, () -> {
+            MUser muser = SdkBridgeModule.this.getUnretainedObject(ptr);
             MStringList list = muser.getFollow(appDid);
-            return this.getPointer(list);
+            return SdkBridgeModule.this.getPointer(list);
         });
+
+
+
     }
 
     @ReactMethod
     public void userSetFollow(String ptr, String did, boolean op, String appDid,Promise promise) {
-        tryReact(promise, () -> {
-            MUser muser = this.getUnretainedObject(ptr);
-            return  muser.setFollow(did, op, appDid);
+
+        tryReactWithPendingSession(promise, () -> {
+            MUser muser = SdkBridgeModule.this.getUnretainedObject(ptr);
+            return muser.setFollow(did, op, appDid);
         });
     }
 
     @ReactMethod
     public void userIsRegistered(String ptr, Promise promise) {
-        tryReact(promise, () -> {
-            MUser muser = this.getUnretainedObject(ptr);
-            return  muser.isRegistered();
+
+        tryReactWithExecutor(promise, () -> {
+            MUser muser = SdkBridgeModule.this.getUnretainedObject(ptr);
+            muser.isRegistered();
+            return null;
         });
+
     }
     @ReactMethod
     public void userRegister(String ptr, String appDid,Promise promise) {
-        tryReact(promise, () -> {
-            MUser muser = this.getUnretainedObject(ptr);
-            muser.register(null, appDid);
-            return null;
+        tryReactWithPendingSession(promise, () -> {
+            MUser muser = SdkBridgeModule.this.getUnretainedObject(ptr);
+            return muser.register(appDid);
         });
+
     }
 
     @ReactMethod
@@ -282,4 +333,60 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
             promise.reject(e.getClass().getCanonicalName(), e);
         }
     }
+    private <T> void tryReactWithExecutor(Promise promise, ExceptionSupplier<T> lambda) {
+        executorService.execute(new Runnable(){
+            @Override
+            public void run(){
+                tryReact(promise, lambda);
+            }
+        });
+    }
+
+    private void tryReactWithPendingSession(Promise promise, ExceptionSupplier<String> lambda) {
+        executorService.execute(new Runnable(){
+            @Override
+            public void run(){
+                try {
+                    final String session = lambda.get();
+                    synchronized (pendingSessionsMutex) {
+                        pendingSessions.put(session, promise);
+                    }
+                } catch (Throwable e) {
+                    promise.reject(e.getClass().getCanonicalName(), e);
+                }
+            }
+        });
+
+    }
+    private void startPendingSessionResolver(final String sdkPtr) {
+        executorService.execute(new Runnable(){
+            @Override
+            public void run(){
+                final MSdk msdk = SdkBridgeModule.this.getUnretainedObject(sdkPtr);
+                synchronized (pendingSessionsMutex) {
+
+                    if (!pendingSessions.isEmpty()) {
+                        for (final String session : pendingSessions.keySet()) {
+                            final Promise sessPromise = pendingSessions.get(session);
+                            try {
+                                if (msdk.checkSession(session)) {
+                                    sessPromise.resolve(session);
+                                    pendingSessions.remove(session);
+                                }
+                            } catch (Throwable e) {
+                                sessPromise.reject(e.getClass().getCanonicalName(), e);
+                                pendingSessions.remove(session);
+                            }
+                        }
+                    }
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
 }
