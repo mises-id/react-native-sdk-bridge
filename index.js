@@ -19,7 +19,7 @@ export class MUserInfo {
     const ptr = await SdkBridge.newUserInfo(
       name,gender,avatarDid,
       avatarThumb,homePage,
-      emails,telphones,intro
+      emails._ptr,telphones._ptr,intro
     );
     return new MUserInfo(ptr);
   }
@@ -33,6 +33,9 @@ export class MUserInfo {
 	async avatarDid() {
     return SdkBridge.userInfoAvatarDid(this._ptr);
   }    
+  async avatarThumb() {
+    return SdkBridge.userInfoAvatarThumb(this._ptr);
+  }  
 	async homePage() {
     return SdkBridge.userInfoHomePage(this._ptr);
   }
@@ -64,7 +67,7 @@ export class MUser {
   }
 
   async setInfo(info){
-    return SdkBridge.userSetInfo(this._ptr, info);
+    return SdkBridge.userSetInfo(this._ptr, info._ptr);
   }
 
 	async info(){
@@ -201,6 +204,9 @@ export class MSdk {
   }
   async randomMnemonics() {
     return SdkBridge.sdkRandomMnemonics(this._ptr);
+  }
+  async login(site, permissions) {
+    return SdkBridge.sdkLogin(this._ptr,site,permissions._ptr);
   }
 }
 
