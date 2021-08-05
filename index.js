@@ -173,7 +173,7 @@ export class MSdk {
   }
 
   static async instance() {
-      if (ins) {
+    if (ins) {
       return ins;
     }
     ins = await MSdk.newSdk();
@@ -201,6 +201,9 @@ export class MSdk {
   }
   async randomMnemonics() {
     return SdkBridge.sdkRandomMnemonics(this._ptr);
+  }
+  async login(site,permission){
+    return SdkBridge.login(this._ptr,site,permission)
   }
 }
 

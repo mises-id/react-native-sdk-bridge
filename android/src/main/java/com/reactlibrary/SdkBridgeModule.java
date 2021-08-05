@@ -95,7 +95,13 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
             return msdk.randomMnemonics();
         });
     }
-
+    @ReactMethod
+    public void login(String ptr,String site,MStringList permission, Promise promise) {
+        tryReact(promise, () -> {
+            MSdk msdk = this.getUnretainedObject(ptr);
+            return msdk.login(site,permission);
+        });
+    }
     @ReactMethod
     public void userMgrActiveUser(String ptr, Promise promise) {
         tryReact(promise, () -> {
@@ -129,7 +135,7 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
     public void userMgrSetActiveUser(String ptr, String did,String pass,  Promise promise) {
         tryReact(promise, () -> {
             MUserMgr muserMgr = this.getUnretainedObject(ptr);
-            muserMgr.setActiveUser(did, pass);
+            muserMgr.setActiveUser(did,pass);
             return null;
         });
     }
