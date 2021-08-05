@@ -13,7 +13,7 @@ export class MUserInfo {
 		name: string, 
 		gender: string, 
 		avatarDid: string, 
-		avatarThumb: number[],
+		avatarThumb: string, //base64
 		homePage: string,
 		emails: MStringList,
 		telphones: MStringList,
@@ -23,7 +23,7 @@ export class MUserInfo {
   public name() : Promise<string>;
 	public gender() : Promise<string>;
 	public avatarDid() : Promise<string>;    
-	public avatarThumb(): Promise<number[]>;   
+	public avatarThumb(): Promise<string>;//base64
 	public homePage() : Promise<string>;
 	public emails() : Promise<MStringList>;
 	public telphones() : Promise<MStringList>;
@@ -56,6 +56,7 @@ export class MSdk {
 	public setTestEndpoint(endpoint: string): Promise<void>;
   public testConnection(): Promise<void>;
   public setLogLevel(level: number): Promise<void>;
+	public login(site: string, permissions: MStringList): Promise<string>;
   public userMgr(): Promise<MUserMgr>;
   public randomMnemonics(): Promise<string>;
   
