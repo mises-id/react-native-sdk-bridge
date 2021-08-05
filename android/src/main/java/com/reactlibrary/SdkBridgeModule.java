@@ -2,6 +2,10 @@
 
 package com.reactlibrary;
 
+import android.os.Handler;
+import android.util.Base64;
+import android.util.Log;
+
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -18,6 +22,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import mobile.*;
 
 public class SdkBridgeModule extends ReactContextBaseJavaModule {
+
+    static final String TAG = "SdkBridgeModule";
 
     private final ReactApplicationContext reactContext;
     private final Map<String, Object> pointers;
@@ -69,6 +75,15 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
             MSdk msdk = this.getUnretainedObject(ptr);
             msdk.setTestEndpoint(endpoint);
             return null;
+        });
+    }
+
+    @ReactMethod
+    public void sdkLogin(String ptr, String site,String permissionPtr, Promise promise) {
+        tryReact(promise, () -> {
+            MSdk msdk = this.getUnretainedObject(ptr);
+            MStringList list = this.getUnretainedObject(permissionPtr);
+            return msdk.login(site, list);
         });
     }
 
@@ -187,18 +202,21 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void newUserInfo(String var0, String var1, String var2, byte[] var3, String var4, MStringList var5, MStringList var6, String var7, Promise promise) {
+    public void newUserInfo(String var0, String var1, String var2, String var3, String var4, String emailPtr, String telPtr, String var7, Promise promise) {
         tryReact(promise, () -> {
-            MUserInfo info = Mobile.newMUserInfo(var0, var1,var2,var3,var4,var5,var6,var7);
+            byte[] bytes = Base64.decode(var3,  Base64.DEFAULT);
+            MStringList listEmail = this.getUnretainedObject(emailPtr);
+            MStringList listTel = this.getUnretainedObject(telPtr);
+            MUserInfo info = Mobile.newMUserInfo(var0, var1,var2,bytes,var4,listEmail,listTel,var7);
             return this.getPointer(info);
         });
     }
 
     @ReactMethod
-    public void userSetInfo(String ptr, MUserInfo info, Promise promise) {
+    public void userSetInfo(String ptr, String infoPtr, Promise promise) {
         tryReactWithPendingSession(promise, () -> {
             MUser muser = this.getUnretainedObject(ptr);
-
+            MUserInfo info = this.getUnretainedObject(infoPtr);
             return muser.setInfo(info);
         });
     }
@@ -271,6 +289,15 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
         tryReact(promise, () -> {
             MUserInfo muserinfo = this.getUnretainedObject(ptr);
             return muserinfo.avatarDid();
+        });
+    }
+
+    @ReactMethod
+    public void userInfoAvatarThumb(String ptr, Promise promise) {
+        tryReact(promise, () -> {
+            MUserInfo muserinfo = this.getUnretainedObject(ptr);
+            byte[] bytes =  muserinfo.aavatarThumb();
+            return Base64.encode(bytes, Base64.DEFAULT);
         });
     }
 
@@ -368,29 +395,41 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
         executorService.execute(new Runnable(){
             @Override
             public void run(){
-                final MSdk msdk = SdkBridgeModule.this.getUnretainedObject(sdkPtr);
-                synchronized (pendingSessionsMutex) {
 
-                    if (!pendingSessions.isEmpty()) {
-                        for (final String session : pendingSessions.keySet()) {
-                            final Promise sessPromise = pendingSessions.get(session);
-                            try {
-                                if (msdk.checkSession(session)) {
+                //Log.d(TAG, "running session resolver");
+                while (true) {
+                    final MSdk msdk = SdkBridgeModule.this.getUnretainedObject(sdkPtr);
+                    //Log.d(TAG, "start pollSessionResult");
+                    MSessionResult result = msdk.pollSessionResult();
+                    if (result != null) {
+                        final String session = result.sessionID();
+                        Log.d(TAG, "session result " + session);
+                        synchronized (pendingSessionsMutex) {
+                            if (pendingSessions.containsKey(session)) {
+                                final Promise sessPromise = pendingSessions.get(session);
+                                if (result.success()) {
+
                                     sessPromise.resolve(session);
-                                    pendingSessions.remove(session);
+                                } else {
+                                    sessPromise.reject(result.sessionID(), result.msg());
                                 }
-                            } catch (Throwable e) {
-                                sessPromise.reject(e.getClass().getCanonicalName(), e);
                                 pendingSessions.remove(session);
                             }
                         }
+
+
+                    } else {
+                        //Log.d(TAG, "poll time out");
+                    }
+
+
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
                 }
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+
             }
         });
     }
