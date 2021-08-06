@@ -176,7 +176,7 @@ export class MSdk {
   }
 
   static async instance() {
-      if (ins) {
+    if (ins) {
       return ins;
     }
     ins = await MSdk.newSdk();
