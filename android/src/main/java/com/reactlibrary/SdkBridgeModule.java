@@ -144,7 +144,7 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
     public void userMgrSetActiveUser(String ptr, String did,String pass,  Promise promise) {
         tryReact(promise, () -> {
             MUserMgr muserMgr = this.getUnretainedObject(ptr);
-            muserMgr.setActiveUser(did, pass);
+            muserMgr.setActiveUser(did,pass);
             return null;
         });
     }

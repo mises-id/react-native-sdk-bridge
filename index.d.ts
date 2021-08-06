@@ -1,4 +1,3 @@
-
 export class MUserList {
   public count() : Promise<number>;
 	public get(idx:number) : Promise<MUser>;
@@ -59,5 +58,4 @@ export class MSdk {
 	public login(site: string, permissions: MStringList): Promise<string>;
   public userMgr(): Promise<MUserMgr>;
   public randomMnemonics(): Promise<string>;
-  
 }
