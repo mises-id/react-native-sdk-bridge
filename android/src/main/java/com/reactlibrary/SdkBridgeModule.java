@@ -88,10 +88,10 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void sdkSetLogLevel(String ptr, long level, Promise promise) {
+    public void sdkSetLogLevel(String ptr, Integer level, Promise promise) {
         tryReact(promise, () -> {
             MSdk msdk = this.getUnretainedObject(ptr);
-            msdk.setLogLevel(level);
+            msdk.setLogLevel(level.longValue());
             return null;
         });
     }
@@ -153,14 +153,14 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
     public void userListCount(String ptr,Promise promise) {
         tryReact(promise, () -> {
             MUserList muserList = this.getUnretainedObject(ptr);
-            return muserList.count();
+            return Integer.valueOf((int)muserList.count());
         });
     }
     @ReactMethod
-    public void userListGet(String ptr, long idx, Promise promise) {
+    public void userListGet(String ptr, Integer  idx, Promise promise) {
         tryReact(promise, () -> {
             MUserList muserList = this.getUnretainedObject(ptr);
-            return this.getPointer(muserList.get(idx));
+            return this.getPointer(muserList.get(idx.longValue()));
         });
     }
 
@@ -176,14 +176,14 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
     public void stringListCount(String ptr,Promise promise) {
         tryReact(promise, () -> {
             MStringList stringList = this.getUnretainedObject(ptr);
-            return stringList.count();
+            return Integer.valueOf((int)stringList.count());
         });
     }
     @ReactMethod
-    public void stringListGet(String ptr, long idx, Promise promise) {
+    public void stringListGet(String ptr, Integer idx, Promise promise) {
         tryReact(promise, () -> {
             MStringList stringList = this.getUnretainedObject(ptr);
-            return stringList.get(idx);
+            return stringList.get(idx.longValue());
         });
     }
 
