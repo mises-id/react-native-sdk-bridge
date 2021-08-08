@@ -51,9 +51,9 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void newSdk(Promise promise) {
         tryReact(promise, () -> {
-            MSdk sdk = Mobile.newMSdk();
             File dir = reactContext.getFilesDir();
-            sdk.setHomePath(dir.getAbsolutePath());
+            Mobile.setHomePath(dir.getAbsolutePath());
+            MSdk sdk = Mobile.newMSdk();
             final String ptr = this.getPointer(sdk);
             startPendingSessionResolver(ptr);
             return ptr;
@@ -135,7 +135,6 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
         tryReact(promise, () -> {
             MUserMgr muserMgr = this.getUnretainedObject(ptr);
             MUserList userList = muserMgr.listUsers();
-
             return this.getPointer(userList);
         });
     }
@@ -160,7 +159,8 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
     public void userListGet(String ptr, Integer  idx, Promise promise) {
         tryReact(promise, () -> {
             MUserList muserList = this.getUnretainedObject(ptr);
-            return this.getPointer(muserList.get(idx.longValue()));
+            MUser user = muserList.get(idx.longValue());
+            return this.getPointer(user);
         });
     }
 

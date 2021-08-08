@@ -127,7 +127,11 @@ export class MUserList {
   }
 
   async get(idx) {
-    return SdkBridge.userListGet(this._ptr,idx);
+    var userPtr = await SdkBridge.userListGet(this._ptr,idx)
+    if (userPtr == null) {
+      return null;
+    }
+    return new MUser(userPtr);
   }
 
 }
