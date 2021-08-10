@@ -28,19 +28,22 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
     private final ReactApplicationContext reactContext;
     private final Map<String, Object> pointers;
     private final AtomicLong pointer;
+
+    private static MSdk sdkInstance = null;
+    private String sdkPtr = null;
     static final int DEFAULT_THREAD_POOL_SIZE = 4;
 
-    ExecutorService executorService = Executors.newFixedThreadPool(DEFAULT_THREAD_POOL_SIZE);
-    private final Map<String, Promise> pendingSessions;
-    private Object pendingSessionsMutex = new Object();
+    private static ExecutorService executorService = Executors.newFixedThreadPool(DEFAULT_THREAD_POOL_SIZE);
+    private static final Map<String, Promise> pendingSessions = new HashMap<>();
+    private static Object pendingSessionsMutex = new Object();
 
     public SdkBridgeModule(ReactApplicationContext reactContext) {
         super(reactContext);
+        Log.d(TAG, "create SdkBridgeModule ");
         this.reactContext = reactContext;
 
         this.pointers = new HashMap<>();
         this.pointer = new AtomicLong();
-        this.pendingSessions = new HashMap<>();
     }
 
     @Override
@@ -49,14 +52,18 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void newSdk(Promise promise) {
+    public void instance(Promise promise) {
         tryReact(promise, () -> {
-            File dir = reactContext.getFilesDir();
-            Mobile.setHomePath(dir.getAbsolutePath());
-            MSdk sdk = Mobile.newMSdk();
-            final String ptr = this.getPointer(sdk);
-            startPendingSessionResolver(ptr);
-            return ptr;
+            if (sdkInstance == null) {
+                File dir = reactContext.getFilesDir();
+                Mobile.setHomePath(dir.getAbsolutePath());
+                sdkInstance = Mobile.newMSdk();
+                startPendingSessionResolver(sdkInstance);
+            }
+            if (sdkPtr == null) {
+                sdkPtr = this.getPointer(sdkInstance);
+            }
+            return sdkPtr;
         });
     }
 
@@ -376,6 +383,7 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
                 try {
                     final String session = lambda.get();
                     synchronized (pendingSessionsMutex) {
+                        Log.d(TAG, "session start " + session);
                         pendingSessions.put(session, promise);
                     }
                 } catch (Throwable e) {
@@ -385,14 +393,13 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
         });
 
     }
-    private void startPendingSessionResolver(final String sdkPtr) {
+    static private void startPendingSessionResolver(final MSdk msdk) {
         executorService.execute(new Runnable(){
             @Override
             public void run(){
 
                 //Log.d(TAG, "running session resolver");
                 while (true) {
-                    final MSdk msdk = SdkBridgeModule.this.getUnretainedObject(sdkPtr);
                     //Log.d(TAG, "start pollSessionResult");
                     MSessionResult result = msdk.pollSessionResult();
                     if (result != null) {

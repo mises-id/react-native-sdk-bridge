@@ -5,8 +5,6 @@ import { NativeModules } from 'react-native';
 const { SdkBridge } = NativeModules;
 
 
-let ins;
-
 export class MUserInfo {
   constructor(ptr) {
     this._ptr = ptr;
@@ -169,22 +167,19 @@ export class MUserMgr {
   }
 }
 
+let sdkIns;
 export class MSdk {
   constructor(ptr) {
     this._ptr = ptr;
   }
 
-  static async newSdk() {
-    const ptr = await SdkBridge.newSdk();
-    return new MSdk(ptr);
-  }
-
   static async instance() {
-    if (ins) {
-      return ins;
+    if (sdkIns) {
+      return sdkIns;
     }
-    ins = await MSdk.newSdk();
-    return ins;
+    const ptr = await SdkBridge.instance();
+    sdkIns = new MSdk(ptr);
+    return sdkIns;
   }
 
   async setTestEndpoint(endpoint) {
