@@ -167,19 +167,14 @@ export class MUserMgr {
   }
 }
 
-let sdkIns;
 export class MSdk {
   constructor(ptr) {
     this._ptr = ptr;
   }
 
   static async instance() {
-    if (sdkIns) {
-      return sdkIns;
-    }
     const ptr = await SdkBridge.instance();
-    sdkIns = new MSdk(ptr);
-    return sdkIns;
+    return new MSdk(ptr);
   }
 
   async setTestEndpoint(endpoint) {
