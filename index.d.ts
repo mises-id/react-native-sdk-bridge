@@ -58,4 +58,6 @@ export class MSdk {
 	public login(site: string, permissions: MStringList): Promise<string>;
   public userMgr(): Promise<MUserMgr>;
   public randomMnemonics(): Promise<string>;
+	public checkMnemonics(mne: string): Promise<void>;
+
 }
