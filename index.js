@@ -199,6 +199,9 @@ export class MSdk {
   async randomMnemonics() {
     return SdkBridge.sdkRandomMnemonics(this._ptr);
   }
+  async checkMnemonics(mne) {
+    return SdkBridge.sdkCheckMnemonics(this._ptr, mne);
+  }
   async login(site, permissions) {
     return SdkBridge.sdkLogin(this._ptr,site,permissions._ptr);
   }
