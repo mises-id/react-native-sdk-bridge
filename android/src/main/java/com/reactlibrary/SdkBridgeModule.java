@@ -117,6 +117,14 @@ public class SdkBridgeModule extends ReactContextBaseJavaModule {
             return msdk.randomMnemonics();
         });
     }
+    @ReactMethod
+    public void sdkCheckMnemonics(String ptr, String mne, Promise promise) {
+        tryReact(promise, () -> {
+            MSdk msdk = this.getUnretainedObject(ptr);
+            msdk.checkMnemonics(mne);
+            return null;
+        });
+    }
 
     @ReactMethod
     public void userMgrActiveUser(String ptr, Promise promise) {
